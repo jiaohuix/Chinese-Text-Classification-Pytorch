@@ -16,6 +16,7 @@ MAX_LENGTH=256
 TRAIN_FILE="data/kfolds/fold_1/train.jsonl"
 VALID_FILE="data/kfolds/fold_1/dev.jsonl"
 TEST_FILE="data/kfolds/fold_1/test.jsonl"
+TEST_FILE="data/kfolds/fold_1/dev.jsonl"
 
 
 

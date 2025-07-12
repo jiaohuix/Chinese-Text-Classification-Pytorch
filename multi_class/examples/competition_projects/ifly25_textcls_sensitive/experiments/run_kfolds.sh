@@ -22,6 +22,7 @@ MAX_LENGTH=256
 TRAIN_FILE="data/kfolds/fold_1/train.jsonl"
 VALID_FILE="data/kfolds/fold_1/dev.jsonl"
 TEST_FILE="data/kfolds/fold_1/test.jsonl"
+TEST_FILE="data/kfolds/fold_1/dev.jsonl"
 
 EXP_NAME="ifly25_baseline_fold1"
 CKPT=$EXP_DIR/$EXP_NAME
@@ -47,6 +48,7 @@ python eval.py $TEST_FILE $CKPT $CKPT/eval
 TRAIN_FILE="data/kfolds/fold_2/train.jsonl"
 VALID_FILE="data/kfolds/fold_2/dev.jsonl"
 TEST_FILE="data/kfolds/fold_2/test.jsonl"
+TEST_FILE="data/kfolds/fold_2/dev.jsonl"
 
 EXP_NAME="ifly25_baseline_fold2"
 CKPT=$EXP_DIR/$EXP_NAME
@@ -73,6 +75,7 @@ python eval.py $TEST_FILE $CKPT $CKPT/eval
 TRAIN_FILE="data/kfolds/fold_3/train.jsonl"
 VALID_FILE="data/kfolds/fold_3/dev.jsonl"
 TEST_FILE="data/kfolds/fold_3/test.jsonl"
+TEST_FILE="data/kfolds/fold_3/dev.jsonl"
 
 EXP_NAME="ifly25_baseline_fold3"
 CKPT=$EXP_DIR/$EXP_NAME
@@ -98,6 +101,7 @@ python eval.py $TEST_FILE $CKPT $CKPT/eval
 TRAIN_FILE="data/kfolds/fold_4/train.jsonl"
 VALID_FILE="data/kfolds/fold_4/dev.jsonl"
 TEST_FILE="data/kfolds/fold_4/test.jsonl"
+TEST_FILE="data/kfolds/fold_4/dev.jsonl"
 
 EXP_NAME="ifly25_baseline_fold4"
 CKPT=$EXP_DIR/$EXP_NAME
@@ -123,6 +127,7 @@ python eval.py $TEST_FILE $CKPT $CKPT/eval
 TRAIN_FILE="data/kfolds/fold_5/train.jsonl"
 VALID_FILE="data/kfolds/fold_5/dev.jsonl"
 TEST_FILE="data/kfolds/fold_5/test.jsonl"
+TEST_FILE="data/kfolds/fold_5/dev.jsonl"
 
 EXP_NAME="ifly25_baseline_fold5"
 CKPT=$EXP_DIR/$EXP_NAME

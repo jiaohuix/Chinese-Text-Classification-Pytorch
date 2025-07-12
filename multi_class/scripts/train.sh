@@ -210,7 +210,10 @@ python train.py \
     --eval_strategy "steps" --eval_steps $eval_steps --save_strategy  "steps" --save_steps  $eval_steps \
     --fp16 --rdrop_alpha $rdrop_alpha --plot_loss  --metric_name $metric_name \
     $fgm_args $neftune_args  \
-    > "$LOG_FILE" 2>&1 &
+    > "$LOG_FILE" 2>&1 
+  
+# > "$LOG_FILE" 2>&1 &
+
 
 
 
