@@ -1,36 +1,36 @@
 '''
-提供基于instruct训练的Qwen3模型的蒸馏logits服务。
+提供预训练模型的蒸馏logits的服务。
 输入：texts list[text]
 输出：logits list[list[float]]
 基于fastapi实现
 
 v0.1.0 随机生成float16的logits
-v0.2.0 用训练好的bert的logits提供服务
-v0.3.0 用裁剪词表的llm提供logits蒸馏服务
-v4.0.0 用完整词表的llm并直接计算logits提供服务 (当前版本)
-
-python scripts_unsloth/api_logits_v4.py outputs_qwen3_instruct/checkpoint-1400
-
+v0.2.0 用训练好的bert的logits提供服务 (当前版本)
+v0.3.0 用llm提供logits蒸馏服务
+v1.0.0 正式API服务
 '''
 
 import os
 import time
 import torch
 import numpy as np
-from typing import List, Dict, Optional, Union, Any
+from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 import logging
 from tqdm import tqdm
 import torch.nn.functional as F
-import sys
 
 # FastAPI相关
 from fastapi import FastAPI, HTTPException
 import uvicorn
 
-# 大模型相关
-from unsloth import FastLanguageModel
-from peft import PeftModel
+# Transformers相关
+from transformers import (
+    AutoConfig, 
+    AutoModelForSequenceClassification, 
+    AutoTokenizer,
+    pipeline
+)
 
 # 设置日志
 logging.basicConfig(
@@ -63,67 +63,45 @@ class PredictResponse(BaseModel):
     """预测响应模型"""
     predictions: List[PredictItem]
 
-# 大模型缓存
-class LLMCache:
-    def __init__(
-        self, 
-        model_name: str, 
-        lora_path: str, 
-        device: str = None, 
-        batch_size: int = 8,
-        load_in_4bit: bool = True,
-        max_seq_length: int = 2048,
-        num_classes: int = 7
-    ):
-        self.model_name = model_name
-        self.lora_path = lora_path
+# 模型缓存
+class ModelCache:
+    def __init__(self, model_path: str, device: str = None, batch_size: int = 16):
+        self.model_path = model_path
         self.device = device if device else ("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = batch_size
-        self.load_in_4bit = load_in_4bit
-        self.max_seq_length = max_seq_length
-        self.num_classes = num_classes
-        
         self.model = None
         self.tokenizer = None
-        self.number_token_ids = []  # 存储数字token的IDs
-        self.result_cache = {}  # 结果缓存
+        self.config = None
+        self.num_classes = None
+        self.result_cache = {}  # 简单的结果缓存
         self.max_cache_size = 10000  # 最大缓存条目数
         
         self.load_model()
         
     def load_model(self):
         """加载模型、分词器和配置"""
-        logger.info(f"Loading model: {self.model_name} with LoRA: {self.lora_path}")
+        logger.info(f"Loading model from {self.model_path}")
         start_time = time.time()
         
         try:
-            # 1. 加载基础模型和tokenizer
-            self.model, self.tokenizer = FastLanguageModel.from_pretrained(
-                model_name=self.model_name,
-                load_in_4bit=self.load_in_4bit,
-                max_seq_length=self.max_seq_length,
-                dtype=None  # 自动检测
+            self.config = AutoConfig.from_pretrained(self.model_path)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                self.model_path,
+                config=self.config
             )
             
-            # 2. 获取数字token IDs (用于约束生成和提取logits)
-            for i in range(0, self.num_classes):
-                token_id = self.tokenizer.encode(str(i), add_special_tokens=False)[0]
-                self.number_token_ids.append(token_id)
-            logger.info(f"Number token IDs: {self.number_token_ids}")
+            # 将模型移动到指定设备
+            self.model.to(self.device)
+            self.model.eval()  # 设置为评估模式
             
-            # 3. 加载LoRA适配器
-            self.model = PeftModel.from_pretrained(self.model, self.lora_path)
-            logger.info("Loaded LoRA adapter")
-            
-            # 4. 合并LoRA权重
-            self.model = self.model.merge_and_unload()
-            logger.info("Merged LoRA weights")
-            
-            # 5. 设置为推理模式
-            FastLanguageModel.for_inference(self.model)
-            logger.info("Model set to inference mode")
+            # 获取类别数量
+            self.num_classes = self.config.num_labels
             
             logger.info(f"Model loaded successfully in {time.time() - start_time:.2f} seconds")
+            logger.info(f"Number of classes: {self.num_classes}")
+            logger.info(f"Device: {self.device}")
+            logger.info(f"Batch size: {self.batch_size}")
             
         except Exception as e:
             logger.error(f"Failed to load model: {str(e)}")
@@ -131,123 +109,73 @@ class LLMCache:
     
     def get_logits(self, texts: List[str]) -> List[List[float]]:
         """获取文本的logits，支持批处理"""
-        # 准备结果和需要处理的文本列表
-        result = [None] * len(texts)
+        # 首先检查缓存
+        cached_results = []
         texts_to_process = []
-        indices_to_process = []
         
-        # 一次性检查所有文本是否在缓存中
-        for i, text in enumerate(texts):
+        for text in texts:
             if text in self.result_cache:
-                result[i] = self.result_cache[text]
+                cached_results.append((text, self.result_cache[text]))
             else:
                 texts_to_process.append(text)
-                indices_to_process.append(i)
         
-        # 如果所有文本都在缓存中，直接返回
+        # 如果所有文本都在缓存中，直接返回缓存的结果
         if not texts_to_process:
             logger.info(f"All {len(texts)} texts found in cache")
-            return result
+            # 按原始顺序返回结果
+            return [self.result_cache[text] for text in texts]
         
         logger.info(f"Processing {len(texts_to_process)} texts in batches")
+        all_logits = []
         
-        # 分批处理未缓存的文本
+        # 分批处理
         for i in range(0, len(texts_to_process), self.batch_size):
             batch_texts = texts_to_process[i:i+self.batch_size]
-            batch_indices = indices_to_process[i:i+self.batch_size]
-            
-            # 真正并行处理批量文本
             batch_logits = self._process_batch(batch_texts)
+            all_logits.extend(batch_logits)
             
-            # 更新结果和缓存
-            for j, (text, logits, original_idx) in enumerate(zip(batch_texts, batch_logits, batch_indices)):
-                result[original_idx] = logits
+            # 更新缓存
+            for text, logits in zip(batch_texts, batch_logits):
                 self.result_cache[text] = logits
         
         # 管理缓存大小
         self._manage_cache_size()
         
+        # 按原始顺序重建结果
+        result = []
+        processed_idx = 0
+        
+        for text in texts:
+            if text in self.result_cache:
+                result.append(self.result_cache[text])
+            else:
+                # 这种情况理论上不应该出现
+                logger.warning(f"Text not found in cache after processing: {text[:30]}...")
+                # 使用零向量作为回退
+                result.append([0.0] * self.num_classes)
+        
         return result
     
     def _process_batch(self, texts: List[str]) -> List[List[float]]:
-        """处理一批文本，真正并行地返回logits"""
-        if not texts:
-            return []
-        
-        # 1. 将所有文本转换为对话格式
-        conversations = [self._format_conversation(text) for text in texts]
-        
-        # 2. 批量应用chat模板
-        prompts = [
-            self.tokenizer.apply_chat_template(
-                conv,
-                tokenize=False,
-                add_generation_prompt=True
-            ) for conv in conversations
-        ]
-        
-        # 3. 批量编码输入
-        # 使用padding=True来处理不同长度的输入
-        batch_inputs = self.tokenizer(
-            prompts,
-            padding=True,
-            return_tensors="pt",
-            truncation=True,
-            max_length=self.max_seq_length
-        ).to(self.model.device)
-        
-        # 4. 一次性计算所有文本的logits
-        with torch.inference_mode():
-            outputs = self.model(**batch_inputs)
-            batch_logits = outputs.logits
+        """处理一批文本，返回logits"""
+        with torch.no_grad():
+            # 对文本进行编码
+            inputs = self.tokenizer(
+                texts, 
+                padding=True, 
+                truncation=True, 
+                max_length=256,  # 可以根据需要调整
+                return_tensors="pt"
+            ).to(self.device)
             
-            # 创建结果列表
-            results = []
+            # 获取模型输出
+            outputs = self.model(**inputs)
             
-            # 5. 对每个样本，提取最后一个非padding token的logits
-            for i, input_ids in enumerate(batch_inputs.input_ids):
-                # 获取该样本的有效长度（非padding部分）
-                valid_length = torch.sum(batch_inputs.attention_mask[i])
-                
-                # 获取最后一个token位置的logits
-                last_token_logits = batch_logits[i, valid_length - 1]
-                
-                # 只考虑数字token的logits
-                class_logits = last_token_logits[self.number_token_ids].cpu().numpy().tolist()
-                results.append(class_logits)
-        
-        return results
-    
-    def _format_conversation(self, text: str) -> List[Dict[str, str]]:
-        """将文本转换为对话格式"""
-        system_prompt = "你是一个医疗场景下的意图识别助手，你的任务是帮助用户识别医疗问题的意图类别。"
-        
-        class_description = """
-class 0: 预约挂号
-class 1: 导诊
-class 2: 专家推荐
-class 3: 预约管理
-class 4: 咨询
-class 5: 报告查询
-class 6: 其他
-"""
-        
-        user_message = f"""这是一条用户查询，请做医疗场景的意图识别:
-===
-{text}
-===
-
-把这条查询分类为以下意图类型之一：
-{class_description}
-
-请仅回答类别编号。"""
-
-        conversation = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
-        
-        return conversation
+            # 提取logits
+            logits = outputs.logits.cpu().numpy()
+            
+            # 转换为列表
+            return logits.tolist()
     
     def _manage_cache_size(self):
         """管理缓存大小，如果超过限制则删除最早的条目"""
@@ -261,39 +189,23 @@ class 6: 其他
 
 # 创建FastAPI应用
 app = FastAPI(
-    title="Knowledge Distillation API v4",
-    description="提供基于Instruct训练的大模型的logits蒸馏服务",
-    version="4.0.0"
+    title="Knowledge Distillation API v2",
+    description="提供预训练模型的logits蒸馏服务",
+    version="2.0.0"
 )
 
 # 全局变量
-llm_cache = None
-
-# 从环境变量获取配置
-model_name = os.environ.get("MODEL_NAME", "/home/wonders/zjh/Projects/pretrained_models/Qwen3-4B")
-lora_path = os.environ.get("LORA_PATH", "outputs_qwen3_instruct/checkpoint-1400")
-# print(f"lora_path: {lora_path}")
-logger.info(f"lora_path: {lora_path}")
+model_cache = None
+model_path = os.environ.get("MODEL_PATH", "ckpt/patient_intention/v25/v25_doubao_fgm/ckpt_v0620_fgm/")
 device = os.environ.get("DEVICE", None)  # 自动选择
-batch_size = int(os.environ.get("BATCH_SIZE", 8))
-num_classes = int(os.environ.get("NUM_CLASSES", 7))
-load_in_4bit = os.environ.get("LOAD_IN_4BIT", "True").lower() == "true"
-max_seq_length = int(os.environ.get("MAX_SEQ_LENGTH", 1024))
+batch_size = int(os.environ.get("BATCH_SIZE", 16))
 
 @app.on_event("startup")
 async def startup_event():
     """启动时加载模型"""
-    global llm_cache
+    global model_cache
     try:
-        llm_cache = LLMCache(
-            model_name=model_name,
-            lora_path=lora_path,
-            device=device,
-            batch_size=batch_size,
-            load_in_4bit=load_in_4bit,
-            max_seq_length=max_seq_length,
-            num_classes=num_classes
-        )
+        model_cache = ModelCache(model_path, device, batch_size)
         logger.info("Model loaded successfully at startup")
     except Exception as e:
         logger.error(f"Failed to load model at startup: {str(e)}")
@@ -302,33 +214,28 @@ async def startup_event():
 @app.post("/v1/knowledge/logits", response_model=LogitsResponse)
 async def distill_logits(request: TextRequest):
     """
-    使用大模型为输入的文本列表生成logits
+    使用预训练模型为输入的文本列表生成logits
     :param request: 包含文本列表的请求
     :return: 每个文本对应的logits列表
     """
-    global llm_cache
+    global model_cache
     
-    if llm_cache is None:
+    if model_cache is None:
         try:
-            llm_cache = LLMCache(
-                model_name=model_name,
-                lora_path=lora_path,
-                device=device,
-                batch_size=batch_size,
-                load_in_4bit=load_in_4bit,
-                max_seq_length=max_seq_length,
-                num_classes=num_classes
-            )
+            model_cache = ModelCache(model_path, device, batch_size)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Model not loaded: {str(e)}")
     
     try:
         start_time = time.time()
-        batch_logits = llm_cache.get_logits(request.texts)
+        batch_logits = model_cache.get_logits(request.texts)
         
         # 确保所有logits都是浮点数列表
         for i, logits in enumerate(batch_logits):
-            batch_logits[i] = [float(l) for l in logits]
+            if not isinstance(logits, list):
+                batch_logits[i] = [float(l) for l in logits]
+            else:
+                batch_logits[i] = [float(l) for l in logits]
         
         logger.info(f"Processed {len(request.texts)} texts in {time.time() - start_time:.2f} seconds")
         return LogitsResponse(logits=batch_logits)
@@ -342,23 +249,19 @@ async def get_info():
     """
     获取API服务的基本信息
     """
-    global llm_cache
+    global model_cache
     
     info = {
-        "version": "4.0.0",
-        "model_name": model_name,
-        "lora_path": lora_path,
+        "version": "2.0.0",
+        "model_path": model_path,
         "device": device if device else ("cuda" if torch.cuda.is_available() else "cpu"),
         "batch_size": batch_size,
-        "num_classes": num_classes,
-        "load_in_4bit": load_in_4bit,
-        "max_seq_length": max_seq_length,
-        "status": "running",
-        "implementation": "direct_logits"  # 标识使用直接计算logits的方法
+        "status": "running"
     }
     
-    if llm_cache:
-        info["cache_size"] = len(llm_cache.result_cache)
+    if model_cache:
+        info["num_classes"] = model_cache.num_classes
+        info["cache_size"] = len(model_cache.result_cache)
     else:
         info["model_status"] = "not_loaded"
     
@@ -367,29 +270,21 @@ async def get_info():
 @app.post("/v1/knowledge/predict", response_model=PredictResponse)
 async def predict_intent(request: TextRequest):
     """
-    使用大模型预测文本的意图分类，并对logits进行softmax归一化
+    使用预训练模型预测文本的意图分类，并对logits进行softmax归一化
     :param request: 包含文本列表的请求和可选的详细得分参数
     :return: 每个文本的预测结果
     """
-    global llm_cache
+    global model_cache
     
-    if llm_cache is None:
+    if model_cache is None:
         try:
-            llm_cache = LLMCache(
-                model_name=model_name,
-                lora_path=lora_path,
-                device=device,
-                batch_size=batch_size,
-                load_in_4bit=load_in_4bit,
-                max_seq_length=max_seq_length,
-                num_classes=num_classes
-            )
+            model_cache = ModelCache(model_path, device, batch_size)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Model not loaded: {str(e)}")
     
     try:
         start_time = time.time()
-        batch_logits = llm_cache.get_logits(request.texts)
+        batch_logits = model_cache.get_logits(request.texts)
         
         # 定义类别映射
         class_map = {
@@ -437,11 +332,5 @@ async def predict_intent(request: TextRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    # 支持命令行参数指定模型路径
-    if len(sys.argv) > 1:
-        lora_path = sys.argv[1]
-        logger.info(f"Using LoRA path from command line: {lora_path}")
-    
-    print(f"Starting API server v4 with model: {model_name} and LoRA: {lora_path}")
-    print(f"Number of classes: {num_classes}")
+    print(f"Starting API server v2 with model: {model_path}")
     uvicorn.run(app, host="0.0.0.0", port=9000) 
