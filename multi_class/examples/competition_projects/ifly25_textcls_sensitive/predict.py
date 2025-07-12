@@ -27,7 +27,9 @@ def load_label_map(label_file):
     """
     with open(label_file, 'r', encoding='utf-8') as f:
         label_data = json.load(f)
-    label_map = {int(item['id']): item['text'] for item in label_data['labels']}
+    # label_map = {int(item['id']): item['text'] for item in label_data['labels']} # id转text
+    label_map = {int(v):k for k, v in label_data.items()}
+    print("label_map:",label_map)
     return label_map
 
 def predict(input_file, output_file, model_dir, label_file=None):
@@ -41,6 +43,7 @@ def predict(input_file, output_file, model_dir, label_file=None):
     if label_file:
         label_map = load_label_map(label_file)
     else:
+        print("Warning！没有标签文件")
         # 如果没有提供标签文件，假设模型输出就是文本标签
         label_map = None
     
@@ -73,8 +76,8 @@ def predict(input_file, output_file, model_dir, label_file=None):
     print(f"预测结果已保存到: {output_file}")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        print("用法: python predict.py <输入jsonl文件> <输出csv文件> <模型目录> [标签文件]")
+    if len(sys.argv) < 5:
+        print("用法: python predict.py <输入jsonl文件> <输出csv文件> <模型目录> <标签文件>")
         sys.exit(1)
     
     input_file = sys.argv[1]
