@@ -1,0 +1,46 @@
+文本分类
+
+
+项目结构：
+```
+multi_class
+    train.py 
+    /scripts
+    /experiments
+    /examples
+        /research_projects
+            llm_cls_swift
+            llm_cls_unsloth
+            distilation
+            quantization
+        /competition_projects
+            ifly25_textcls_sensitive
+            intern25_textcls_paper26
+    /data_augmentation
+    /deploy
+    /analysis
+```
+
+环境：
+```
+pip install uv 
+uv venv bert_cls -p python3.10
+source bert_cls/bin/activate
+uv pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple 
+```
+或者
+```
+ bash scripts/install_env.sh 
+```
+
+新闻分类例子：
+
+数据处理：
+cd multi_class
+python scripts/thunews_preprocess.py 
+
+下载模型
+python scripts/modelscope_downloader.py 
+
+训练
+bash experiments/run_all.sh 

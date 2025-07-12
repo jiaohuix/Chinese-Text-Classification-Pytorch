@@ -1,0 +1,30 @@
+accelerate==0.34.2
+datasets >= 1.8.0
+sentencepiece != 0.1.92
+scipy
+scikit-learn
+protobuf
+# torch==2.1.2
+torch==2.4.0
+#transformers==4.46.1
+transformers==4.45.2 
+#transformers==4.39.0 # setfit
+sentence-transformers==3.1.1
+evaluate
+pandas
+optimum 
+onnx 
+onnxruntime 
+weasyprint
+setfit==1.0.3
+huggingface_hub==0.23.5
+python-Levenshtein
+matplotlib
+fastapi>=0.68.0
+uvicorn>=0.15.0
+numpy>=1.21.0
+tabulate
+pydantic>=1.8.0
+# for modernbert
+# transformers==4.52.4
+# accelerate==1.7.0
