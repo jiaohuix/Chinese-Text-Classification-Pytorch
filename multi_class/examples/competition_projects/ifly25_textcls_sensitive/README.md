@@ -124,6 +124,7 @@ python predict.py data/processed/test.jsonl data/processed/test.csv ckpt
    - 文本替换/回译等基础增强
    - 尝试DataAug库
    - 能否用LLM增强训练集或验证集？
+   - T5生成数据
 
 4. [ ] 测试集构建
    - 从原始数据划分10%作为固定测试集
@@ -136,3 +137,7 @@ python predict.py data/processed/test.jsonl data/processed/test.csv ckpt
 6. [ ] 模型升级
    - 更大预训练模型
    - 集成学习方案
+
+7. [] 错例分析+数据增强
+
+    https://github.com/PaddlePaddle/PaddleNLP/tree/develop/slm/applications/text_classification/multi_class/analysis
