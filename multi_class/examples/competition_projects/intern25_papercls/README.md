@@ -37,3 +37,7 @@ https://colab.research.google.com/drive/1E-BFn_y_T24WC6X3Ab3xvQQ2Bpaeykdp?usp=sh
 livehouse/arXiv-metadata-oai-snapshot-ver233
 
 modelscope download --dataset livehouse/arXiv-metadata-oai-snapshot-ver233 --local_dir ./data_arxiv
+
+
+python data_scripts/check_length.py --model_path /root/train-paper
+/code/Chinese-Text-Classification-Pytorch-master/multi_class/examples/competition_projects/ifly25_textcls_sensitive/models/dienstag/chinese-roberta-wwm-ext/ --data_path data/train_bert.jsonl 
