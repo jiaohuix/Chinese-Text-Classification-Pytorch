@@ -190,6 +190,12 @@ export NPROC_PER_NODE=1
 export OMP_NUM_THREADS=1
 export CUDA_VISIBLE_DEVICES=0
 
+echo "Log file: $LOG_FILE"
+
+# 显示查看日志的命令
+echo "To view logs in real-time, use:"
+echo "tail -f $LOG_FILE"
+
 # nohup python train.py \
 python train.py \
     --model_name_or_path "$model_path" \
