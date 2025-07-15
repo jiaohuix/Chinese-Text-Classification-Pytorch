@@ -1,5 +1,5 @@
 #!/bin/bash
-# 实验运行脚本: run_thunews_roberta.sh
+# 实验运行脚本: run_roberta.sh
 
 ################################################################
 # 实验配置
@@ -19,18 +19,21 @@ TEST_FILE="data/thunews/test.jsonl"
 
 
 
-# 对抗训练参数
-fgm_eps=1
+
 
 
 
 ################################################################
 # 实验配置 
 ################################################################
-# 训练
-EXP_NAME="thunews_fgm_eps$fgm_eps"
+# 对抗训练参数
+fgm_eps=1
+
+EXP_NAME="fgm_eps$fgm_eps"
+CKPT=$EXP_DIR/$EXP_NAME
+
 bash scripts/train.sh --model_path $MODEL_PATH \
- --output_dir $EXP_DIR/$EXP_NAME \
+ --output_dir $CKPT \
  --train_file $TRAIN_FILE \
  --valid_file $VALID_FILE \
  --test_file $TEST_FILE \

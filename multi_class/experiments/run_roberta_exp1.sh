@@ -1,5 +1,5 @@
 #!/bin/bash
-# 实验运行脚本: run_thunews_roberta.sh
+# 实验运行脚本: run_roberta.sh
 
 ################################################################
 # 实验配置
@@ -22,7 +22,7 @@ TEST_FILE="data/thunews/test.jsonl"
 # 实验配置 
 ################################################################
 # 训练
-EXP_NAME="thunews_baseline"
+EXP_NAME="baseline"
 CKPT=$EXP_DIR/$EXP_NAME
 
 bash scripts/train.sh --model_path $MODEL_PATH \
