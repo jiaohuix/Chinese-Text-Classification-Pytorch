@@ -27,6 +27,7 @@ pip install uv
 uv venv bert_cls -p python3.10
 source bert_cls/bin/activate
 uv pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple 
+cd source && unzip metric.zip && cp -r metric/accuracy ..
 ```
 或者
 ```
