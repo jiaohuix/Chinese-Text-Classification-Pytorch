@@ -217,7 +217,7 @@ class BalancedDataAugmentor:
         
 def main():
     example_data_path = "data/processed/train_cat8k_splice2.jsonl" # 替换为你想要的输出文件路径
-    outfile = "data/processed/train_cat8k_splice2_eda1w.json"
+    outfile = "data/processed/train_cat8k_splice2_eda1w.jsonl"
     
    
     augmentor = BalancedDataAugmentor(

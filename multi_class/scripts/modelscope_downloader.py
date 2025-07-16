@@ -10,7 +10,17 @@
     python download_model.py
 
     在执行脚本前，请确保已安装modelscope库（pip install modelscope）。
+命令行：
+modelscope download --model dienstag/chinese-roberta-wwm-ext --local_dir  ./models/chinese-roberta-wwm-ext
+modelscope download --model dienstag/chinese-roberta-wwm-ext-large --local_dir  ./models/chinese-roberta-wwm-ext-large
+modelscope download --model iic/nlp_roberta_backbone_base_std --local_dir  ./models/nlp_roberta_backbone_base_std
+modelscope download --model iic/nlp_roberta_backbone_lite_std --local_dir  ./models/nlp_roberta_backbone_lite_std
+modelscope download --model BAAI/bge-small-zh-v1.5 --local_dir  ./models/bge-small-zh-v1.5
+modelscope download --model BAAI/bge-m3 --local_dir  ./models/bge-m3
+
 '''
+
+
 #
 import os
 import logging
