@@ -216,11 +216,8 @@ class BalancedDataAugmentor:
         self.save_json()
         
 def main():
-    # example_data_path = 'data/train.jsonl'
-    # outfile = "data/train_aug_new.json"
-
-    example_data_path = "data/processed/train_aug_cat8k_splice2.jsonl" # 替换为你想要的输出文件路径
-    outfile = "data/processed/train_aug_cat8k_splice2_eda1w.json"
+    example_data_path = "data/processed/train_cat8k_splice2.jsonl" # 替换为你想要的输出文件路径
+    outfile = "data/processed/train_cat8k_splice2_eda1w.json"
     
    
     augmentor = BalancedDataAugmentor(

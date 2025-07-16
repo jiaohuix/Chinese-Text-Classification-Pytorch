@@ -167,10 +167,10 @@ def augment_data_by_category(input_file: str, max_per_category: int, num_splices
 
 if __name__ == "__main__":
     # 定义你的参数
-    INPUT_JSONL_FILE = "data/processed/train_sub.jsonl" # 替换为你的输入文件路径
+    INPUT_JSONL_FILE = "data/processed/train.jsonl" # 替换为你的输入文件路径
     MAX_SAMPLES_PER_CATEGORY = 8000              # 替换为你想要的每个类别的最大数量
     SPLICE_COUNT = 2                           # 替换为你想要的每次拼接选择的文本数量 (例如 2 或 3)
-    OUTPUT_JSONL_FILE = "data/processed/train_aug_cat8k_splice2.jsonl" # 替换为你想要的输出文件路径
+    OUTPUT_JSONL_FILE = "data/processed/train_cat8k_splice2.jsonl" # 替换为你想要的输出文件路径
 
     # 调用增强函数
     augment_data_by_category(INPUT_JSONL_FILE, MAX_SAMPLES_PER_CATEGORY, SPLICE_COUNT, OUTPUT_JSONL_FILE)
