@@ -549,7 +549,7 @@ def main():
     #     type=str,
     #     default="prediction",
     #     help="输入文件中包含的预测列"
-    )
+    # )
     args = parser.parse_args()
 
     # 1. 批量推理
