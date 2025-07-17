@@ -14,7 +14,6 @@ pandas
 optimum 
 onnx 
 onnxruntime 
-weasyprint
 #setfit==1.0.3
 huggingface_hub==0.23.5
 python-Levenshtein
@@ -29,3 +28,5 @@ pydantic>=1.8.0
 # accelerate==1.7.0
 modelscope
 nlpcda
+weasyprint
+seaborn

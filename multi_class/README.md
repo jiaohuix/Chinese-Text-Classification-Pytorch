@@ -45,3 +45,5 @@ python scripts/modelscope_downloader.py
 
 训练
 bash experiments/run_all.sh 
+
+python inference.py -i data/test.jsonl -o results -m ckpt -l ckpt/labels.json --do_eval --batch_size 32
