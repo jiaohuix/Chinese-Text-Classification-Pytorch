@@ -4,6 +4,8 @@
 """
 将对话JSONL数据转换为BERT分类训练格式
 支持命令行参数配置输入输出路径
+python data_scripts/convert_chat_to_bert.py -i data/train_mt.jsonl -o data/train_mt_bert.jsonl 
+python data_scripts/convert_chat_to_bert.py -i data/valid_mt.jsonl -o data/valid_mt_bert.jsonl 
 """
 
 import os
