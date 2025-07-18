@@ -3,7 +3,7 @@
 '''
 @author: jiaohuix (adapted for ONNX by AI)
 @file: inference_onnx.py
-@date: 2025/07/17 14:39
+@date: 2025/07/18 15:54
 
 
 # 示例 ONNX 模型推理 (不需要 label_file, 也不需要输入文件有 label 列)

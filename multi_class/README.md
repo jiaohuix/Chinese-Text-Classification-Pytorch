@@ -47,3 +47,10 @@ python scripts/modelscope_downloader.py
 bash experiments/run_all.sh 
 
 python inference.py -i data/test.jsonl -o results -m ckpt -l ckpt/labels.json --do_eval --batch_size 32
+
+
+| 模型类型       | 样本数量 | 准确率  | 错误案例数 | 总执行时间（秒） | QPS   |
+|----------------|----------|---------|------------|------------------|-------|
+| FP32（原模型） | 2002     | 0.8531  | 294        | 14.5618          | 137.48|
+| FP32（ONNX）   | 2002     | 0.8531  | 294        | 13.8005          | 145.07|
+| INT8（ONNX量化）| 2002     | 0.7622  | 476        | 10.7145          | 186.85|

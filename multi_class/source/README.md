@@ -1,3 +1,4 @@
+pip install matplotlib
 cd source
 unzip metric.zip
 cp -r metric/accuracy ../
