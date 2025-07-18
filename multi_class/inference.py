@@ -41,7 +41,7 @@ from datetime import datetime
 import pandas as pd
 from datasets import Dataset, load_dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
-
+from tqdm import tqdm
 
 def load_label_map(label_file):
     """
@@ -184,27 +184,51 @@ def load_model_and_classifier(model_dir, device=0, max_length=256, batch_size=16
         sys.exit(1)
 
 
-def predict(classifier, text_ls):
+# def predict(classifier, text_ls):
+#     """
+#     使用分类器进行预测。
+
+#     参数:
+#         classifier: 文本分类器 pipeline。
+#         text_ls (list): 文本列表。
+
+#     返回:
+#         tuple: 包含预测结果列表、开始时间戳和结束时间戳的元组。
+#                预测结果的 'label' 字段应为数字 ID。
+#     """
+#     print("🚀 开始进行文本预测...")
+#     start_time = time.time()
+#     try:
+#         # pipeline 直接接受列表并处理批处理
+#         # 假设 pipeline 的输出是 [{'label': '0', 'score': 0.9}, ...]
+#         outputs = classifier(text_ls)
+#     except Exception as e:
+#         print(f"❌ 预测过程中发生错误: {e}")
+#         sys.exit(1)
+#     end_time = time.time()
+#     print("✅ 预测完成。")
+#     return outputs, start_time, end_time
+
+
+def batch_predict(classifier, text_ls, batch_size=16):
     """
-    使用分类器进行预测。
+    使用分类器进行批量预测，并显示进度条。
 
     参数:
         classifier: 文本分类器 pipeline。
         text_ls (list): 文本列表。
+        batch_size (int): 批量大小。
 
     返回:
-        tuple: 包含预测结果列表、开始时间戳和结束时间戳的元组。
-               预测结果的 'label' 字段应为数字 ID。
+        tuple: 预测结果列表，开始时间和结束时间。
     """
     print("🚀 开始进行文本预测...")
     start_time = time.time()
-    try:
-        # pipeline 直接接受列表并处理批处理
-        # 假设 pipeline 的输出是 [{'label': '0', 'score': 0.9}, ...]
-        outputs = classifier(text_ls)
-    except Exception as e:
-        print(f"❌ 预测过程中发生错误: {e}")
-        sys.exit(1)
+    outputs = []
+    for i in tqdm(range(0, len(text_ls), batch_size), desc="推理进度"):
+        batch_texts = text_ls[i:i+batch_size]
+        batch_outputs = classifier(batch_texts)
+        outputs.extend(batch_outputs)
     end_time = time.time()
     print("✅ 预测完成。")
     return outputs, start_time, end_time
@@ -523,7 +547,7 @@ def main():
 
     # 执行预测
     # outputs 是原始输出，其中 'label' 是模型预测的数字 ID 字符串
-    outputs, start_time, end_time = predict(classifier, text_ls)
+    outputs, start_time, end_time = batch_predict(classifier, text_ls, args.batch_size)
 
     # 计算 QPS 和执行时间
     data_size = len(text_ls)
