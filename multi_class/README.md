@@ -59,7 +59,7 @@ python inference.py -i data/test.jsonl -o results -m ckpt -l ckpt/labels.json --
 TODO:
 
 - [x] 写todo
-- [] 修复bug：tokenzier没保存；训练支持传label.json文件，和保存；评估、webui时候传入labels.json
+- [ ] 修复bug：tokenzier没保存；训练支持传label.json文件，和保存；评估、webui时候传入labels.json
 - [ ] 1 sentence-transformer训练
 - [ ] 2 gradio webui训练
 - [ ] 3 数据增强，ppnlp
