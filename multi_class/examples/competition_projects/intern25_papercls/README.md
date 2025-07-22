@@ -8,12 +8,25 @@ source ms-swift/bin/activate
 uv pip install 'ms-swift' -i  https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 数据处理
+
+下载模型
+临时取消所有代理环境变量
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+
+modelscope download --repo-type model Shanghai_AI_Laboratory/internlm2_5-1_8b-chat --local_dir internlm2_5-1_8b-chat
+下载数据：
+modelscope download --dataset livehouse/arXiv-metadata-oai-snapshot-ver233  --local_dir  data_arxiv
+
 python process.py
 bash train_test_split.sh
 输入需要data/corpus.jsonl，输出data/train.jsonl data/valid.jsonl(2k5)
 
+```
+python data_scripts/process_v4_multi_class_mprompt.py
+```
 python data_scripts/convert_chat_to_bert.py -i data/train.jsonl -o data/train_bert.jsonl
 python data_scripts/convert_chat_to_bert.py -i data/valid.jsonl -o data/valid_bert.jsonl
+
 
 # 训练
 

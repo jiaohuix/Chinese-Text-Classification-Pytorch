@@ -1,39 +1,13 @@
 #!/bin/bash
 
 MODEL_PATH="/share/new_models/Shanghai_AI_Laboratory/internlm2_5-1_8b-chat"
-# DATA_PATH="swift_data/data.jsonl"
-# CKPT="./swift_output/InternLM2.5-1.8B-Lora"
-
-# DATA_PATH="data/train.jsonl"
-# CKPT="./swift_output/InternLM2.5-1.8B-Lora-1w3"
-
-# DATA_PATH="data/train_mt.jsonl"
-# CKPT="./swift_output/InternLM2.5-1.8B-Lora-1w3-multi-template"
 
 # day0720 周日 从多类别采样数据，确保v类存在
+# neftune参数
+export USE_NEFTUNE=true
+export NEFTUNE_ALPHA=1
 DATA_PATH="data/mclass/papercls26_v21/train.jsonl"
-CKPT="./swift_output/InternLM2.5-1.8B-Lora-1w3v21"
-
-
-# day0721 原始数据 25类，V类取0720
-DATA_PATH="data/mclass/papercls26_v22/train.jsonl"
-CKPT="./swift_output/InternLM2.5-1.8B-Lora-1w3v22"
-mkdir -p $CKPT
-
-
-# day0721 v2 从多类别采样数据，确保v类存在 + 90%的原始模板 + 10%的多样模板
-DATA_PATH="data/mclass_mprompt/ratio0.9/train.jsonl"
-CKPT="./swift_output/InternLM2.5-1.8B-Lora-1w3v22-mprompt0.9"
-mkdir -p $CKPT
-
-# day0721 v2 从多类别采样数据，确保v类存在 + 90%的原始模板 + 10%的多样模板
-DATA_PATH="data/mclass_mprompt/ratio0.5/train.jsonl"
-CKPT="./swift_output/InternLM2.5-1.8B-Lora-1w3v22-mprompt0.5"
-mkdir -p $CKPT
-
-# day0722 测试neftune
-DATA_PATH="data/mclass_mprompt/ratio0.5/train.jsonl"
-CKPT="./swift_output/tst"
+CKPT="./swift_output/InternLM2.5-1.8B-Lora-1w3v21-neft1"
 mkdir -p $CKPT
 
 

@@ -1,3 +1,6 @@
+'''
+这个函数非常重要，不加训练会nan：prepare_model_for_kbit_training
+'''
 import torch
 from datasets import load_dataset
 from transformers import (
