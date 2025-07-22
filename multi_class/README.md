@@ -54,3 +54,16 @@ python inference.py -i data/test.jsonl -o results -m ckpt -l ckpt/labels.json --
 | FP32（原模型） | 2002     | 0.8531  | 294        | 14.5618          | 137.48|
 | FP32（ONNX）   | 2002     | 0.8531  | 294        | 13.8005          | 145.07|
 | INT8（ONNX量化）| 2002     | 0.7622  | 476        | 10.7145          | 186.85|
+
+
+TODO:
+
+- [x] 写todo
+- [] 修复bug：tokenzier没保存；训练支持传label.json文件，和保存；评估、webui时候传入labels.json
+- [ ] 1 sentence-transformer训练
+- [ ] 2 gradio webui训练
+- [ ] 3 数据增强，ppnlp
+- [ ] 4 量化训练对比
+- [ ] 5 量化推理，bertcpp
+- [ ] 6 支持modernbert训练
+- [ ] 7 js\qt开发训练的webui
