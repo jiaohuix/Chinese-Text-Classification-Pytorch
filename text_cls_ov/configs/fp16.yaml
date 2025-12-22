@@ -1,0 +1,47 @@
+model_name: "google-bert/bert-base-chinese"
+task: classification
+num_labels: 10
+
+dataset:
+  type: "local"
+  train_path: "./data/thunews/train.jsonl"
+  val_path: "./data/thunews/dev.jsonl"
+  test_path: "./data/thunews/test.jsonl"
+  text_column: "text"
+  label_column: "label"
+  label_text_column: "text_label" # 自动将文本类别转 ID
+  use_text_label_flag: true     # 开启则使用 label_text_column
+  label_list: ["finance", "realty", "stocks", "education", "science", "society", "politics", "sports", "game", "entertainment"]
+  max_train_samples: 10000
+  # max_val_samples: 10000
+
+training:
+  # 基础参数
+  output_dir: "./experiments/bert_v1"
+  lr: 2e-5
+  epochs: 1
+  batch_size: 32
+  seed: 42              # 需求: 种子配置
+  fp16: true
+  
+  # 步长与策略 (需求: 动态配置)
+  warmup_ratio: 0.1       # 需求: warmup
+  logging_steps: 10
+  save_strategy: "epoch"  # 需求: save steps: steps/epoch
+  save_steps: 500
+  eval_strategy: "epoch"
+  save_total_limit: 10
+
+  # 进阶 Lora/QLora
+  qlora: true
+  lora_r: 64
+  lora_alpha: 128
+
+
+quantization:
+  method: none        # none | ptq | qlora
+  bits: 16            # 16 | 8 | 4
+  backend: openvino   # openvino | tensorrt
+
+inference:
+  device: cpu         # cpu | gpu

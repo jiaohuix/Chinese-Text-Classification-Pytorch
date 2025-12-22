@@ -1,0 +1,14 @@
+torch>=2.1.0
+transformers>=4.35.0
+datasets>=2.14.0
+peft>=0.6.0
+evaluate>=0.4.0
+bitsandbytes>=0.41.0
+numpy>=1.25.0
+PyYAML>=6.0
+sentencepiece>=0.1.99  # 如果用到中文 BERT tokenizer
+scikit-learn
+tensorboardX
+
+# eager 
+# optimum-intel[openvino]

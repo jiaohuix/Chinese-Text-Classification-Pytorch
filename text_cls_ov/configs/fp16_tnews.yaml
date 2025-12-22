@@ -1,0 +1,30 @@
+model_name: google-bert/bert-base-chinese
+task: classification
+num_labels: 15
+
+dataset:
+  type: "local"
+  train_path: "tnews_train.jsonl"
+  val_path: "tnews_validation.jsonl"
+  text_column: "sentence"
+  label_column: "label"
+  # TNEWS 全量约 5.3 万条，建议先限制 20000 条看效果，如果空间允许再全量
+  max_train_samples: 20000 
+  max_val_samples: 2000
+
+training:
+  epochs: 3
+  batch_size: 32
+  lr: 3e-5
+  fp16: true
+  qlora: false
+  lora_r: 8
+  lora_alpha: 32
+
+quantization:
+  method: none        # none | ptq | qlora
+  bits: 16            # 16 | 8 | 4
+  backend: openvino   # openvino | tensorrt
+
+inference:
+  device: cpu         # cpu | gpu
